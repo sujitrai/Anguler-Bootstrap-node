@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html ng-app="helloApp">
+<head>
+<title>{{title}}</title>
+<link rel="stylesheet" href="stylesheets/bootstrap.min.css">
+<script	src="javascripts/jquery.min.js"></script>
+<script	src="javascripts/bootstrap.min.js"></script>
+<script	src="javascripts/angular.min.js"></script>
+<link rel="stylesheet" type="text/css" href="stylesheets/bootstrap-tagsinput.css">
+<script type="text/javascript" src="javascripts/bootstrap-tagsinput.js"></script>
+
+</head>
+<!-- Controller name goes here -->
+<body ng-controller="CompanyCtrl">
+<hr>
+<button class="btn btn-lg pull-right" ng-click="logout()"> Log out</button>
+<h3 ng-hide="!isAdmin">Edit User:</h3>
+<h3 ng-hide="isAdmin">Update Profile:</h3> 
+<form class="form-horizontal">
+  <div class="form-group">
+    <label class="col-sm-2 control-label">Name:</label>
+    <div class="col-sm-10">
+    <input type="text" ng-model="fName" ng-disabled="isAdmin" placeholder="Full Name">
+    </div>
+  </div> 
+  <div class="form-group">
+    <label class="col-sm-2 control-label">Email</label>
+    <div class="col-sm-10">
+    <input type="text" ng-model="email" ng-disabled="true" placeholder="Email">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">Type</label>
+    <div class="col-sm-10">
+    <input type="text" ng-model="type" ng-disabled="true" placeholder="Type">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">Skills</label>
+    <div class="col-sm-10" ng-disabled="isAdmin" >
+    <input type="text" id="skills" ng-model="skills" placeholder="Skills" data-role="tagsinput">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">Employer</label>
+    <div class="col-sm-10">
+    <input type="text" ng-model="employer" ng-disabled="!isAdmin"  placeholder="Employer">
+    </div>
+  </div>
+</form>
+<button class="btn btn-success" ng-disabled="error || incomplete" ng-click="updateUser()">
+<span class="glyphicon glyphicon-save"></span>  Save Changes
+</button>
+<hr>
+<div ng-hide="!isAdmin" style="padding:20px 0px 60px 0px">
+			<span class="col-md-1" style="font-weight:bold">Search</span>
+			<span class="col-md-3">
+			<input type="text" class="form-control ng-valid ng-dirty" ng-model="searchKeyword">
+			</span>
+		</div>
+<table ng-hide="!isAdmin" class="table table-striped">
+	<thead>
+	<tr>
+		<th>Name
+		</th>
+		<th>Email
+		</th>
+		<th>Type
+		</th>
+		<th>Skills
+		</th>
+		<th>Employer
+		</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr ng-repeat="user in users  | filter: searchKeyword ">
+		<td>{[{user.name}]}
+		</td>
+		<td>{[{user.email}]}
+		</td>
+		<td>{[{user.type}]}
+		</td>
+		<td>{[{user.skills}]}
+		</td>
+		<td>{[{user.employer}]}
+		</td>
+		<td>
+      <button class="btn" ng-click="editUser(user.email)">
+      <span class="glyphicon glyphicon-pencil"></span>&nbsp;&nbsp;Edit
+      </button>
+    </td>
+		
+	</tr>
+	</tbody>
+</table>
+
+
+</body>
+
+<script>
+var helloApp = angular.module("helloApp", []);
+helloApp.config(function($interpolateProvider) {
+  $interpolateProvider.startSymbol('{[{');
+  $interpolateProvider.endSymbol('}]}');
+});
+helloApp.controller("CompanyCtrl", function($scope,$http,$window) {
+$scope.edit = true;
+$scope.isAdmin={{isAdmin}};
+$scope.error = false;
+$scope.incomplete = false; 
+$scope.users = {{{data}}};
+ 
+$scope.editUser = function(email) {
+  console.log(email);
+	var index = -1;		
+		var comArr = eval( $scope.users );
+		for( var i = 0; i < comArr.length; i++ ) {
+			if( comArr[i].email === email ) {
+				index = i;
+				break;
+			}
+		}
+		if( index === -1 ) {
+			alert( "Something gone wrong" );
+		}
+
+		$scope.fName=$scope.users[i].name;
+		$scope.email=$scope.users[i].email;
+		$scope.type=$scope.users[i].type;
+		
+		$('#skills').tagsinput('removeAll');
+		$('#skills').tagsinput('add', $scope.users[i].skills);
+		$scope.employer=$scope.users[i].employer;
+	};
+	$scope.updateUser = function() {
+
+		if (!$scope.email || !$scope.employer) {
+						            return;
+						        }
+						 		var data='';
+						        var url = 'update';
+						        if($scope.isAdmin)
+						         data = 'email=' + $scope.email +
+						                   '&employer=' + $scope.employer;
+						        else
+						        	data = 'email=' + $scope.email +
+						                   '&skills=' + $scope.skills+
+						                   '&fname=' + $scope.fName;
+						        var config = {
+						            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+						        };
+						 
+						        $http.post(url, data, config).
+						            success(function (data) {
+						              if(data.affectedRows==1)
+						              {
+						               alert('Record Updated..!!!');
+						           	  }
+								   }).
+						            error(function () {
+						                // errors here, including:
+						                // invalid_grant_type
+						                // invalid username/password
+						            });
+ 
+};
+$scope.logout = function() {
+
+
+						 		
+						        var url = 'logout';
+						         $http.get(url).
+						            success(function () {
+						              
+						               alert('Successfully logged out..!!!');
+						               $window.location.href = '/';
+						           	  
+								   }).
+						            error(function () {
+						                // errors here, including:
+						                // invalid_grant_type
+						                // invalid username/password
+						            });
+ 
+};
+$scope.removeRow = function(name){				
+		var index = -1;		
+		var comArr = eval( $scope.companies );
+		for( var i = 0; i < comArr.length; i++ ) {
+			if( comArr[i].name === name ) {
+				index = i;
+				break;
+			}
+		}
+		if( index === -1 ) {
+			alert( "Something gone wrong" );
+		}
+		$scope.companies.splice( index, 1 );		
+	};
+ if(!$scope.isAdmin)
+ {
+ 	console.log($scope.users[0].email);
+ 	$('#skills').tagsinput('add', $scope.users[0].skills);
+ 	$scope.editUser($scope.users[0].email);
+ }
+});
+</script>
+	
+
+</html>
+	
